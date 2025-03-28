@@ -11,6 +11,7 @@ import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-css";
 import "prismjs/components/prism-json";
 import "prismjs/components/prism-python";
+import { CopyIcon } from "@radix-ui/react-icons";
 
 // Define message type
 interface Message {
@@ -19,7 +20,13 @@ interface Message {
 }
 
 // MessagesList: Renders the chat messages and handles scrolling/highlighting
-function MessagesList({ messages, isLoading }: { messages: Message[], isLoading: boolean }) {
+function MessagesList({
+    messages,
+    isLoading,
+}: {
+    messages: Message[];
+    isLoading: boolean;
+}) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -33,10 +40,14 @@ function MessagesList({ messages, isLoading }: { messages: Message[], isLoading:
         if (messagesContainerRef.current) {
             Prism.highlightAllUnder(messagesContainerRef.current);
         }
-    }, [messages]); // Only depends on messages, not prompt
+    }, [messages]);
+
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text);
+    };
 
     return (
-        <div className="flex overflow-y-auto wrap p-4 ">
+        <div className="flex overflow-y-auto wrap p-4">
             <div
                 ref={messagesContainerRef}
                 className="flex flex-col w-full max-w-2xl mx-auto space-y-4"
@@ -46,31 +57,28 @@ function MessagesList({ messages, isLoading }: { messages: Message[], isLoading:
                         key={index}
                         className={`flex w-full ${
                             message.role === "assistant"
-                                ? "w-full"
+                                ? "justify-start"
                                 : "justify-end"
                         }`}
                     >
                         <div
-                            className={`${
+                            className={`relative ${
                                 message.role === "assistant"
                                     ? "opacity-80 max-w-[100%]"
-                                    : "bg-[#313234] text-white opacity-70 rounded-t-4xl rounded-bl-4xl border-[1px] max-w-[80%] rounded-br-md"
+                                    : "text-white opacity-70 rounded-t-4xl rounded-bl-4xl border-[1px] max-w-[80%] bg-[#313234] rounded-br-md"
                             } px-4 py-3 break-words`}
                         >
                             <ReactMarkdown
                                 rehypePlugins={[rehypeSanitize]}
                                 components={{
-                                    code({
-                                        // node,
-                                        className,
-                                        children,
-                                        ...props
-                                    }) {
+                                    code({ className, children, ...props }) {
                                         const match = /language-(\w+)/.exec(
                                             className || ""
                                         );
-                                        return !className?.includes("inline") ? (
-                                            <div className="overflow-x-auto my-2 rounded-lg">
+                                        return !className?.includes(
+                                            "inline"
+                                        ) ? (
+                                            <div className="relative overflow-x-auto my-2 rounded-lg">
                                                 <pre className="bg-[#1E1E1E] p-3 rounded-lg">
                                                     <code
                                                         className={
@@ -85,6 +93,19 @@ function MessagesList({ messages, isLoading }: { messages: Message[], isLoading:
                                                         ).replace(/\n$/, "")}
                                                     </code>
                                                 </pre>
+                                                {/* Copy icon for code blocks */}
+                                                <button
+                                                    onClick={() =>
+                                                        copyToClipboard(
+                                                            String(
+                                                                children
+                                                            ).replace(/\n$/, "")
+                                                        )
+                                                    }
+                                                    className="absolute top-2 right-2 p-1 text-white rounded hover:bg-gray-600"
+                                                >
+                                                    <CopyIcon className="h-4 w-4" />
+                                                </button>
                                             </div>
                                         ) : (
                                             <code
@@ -116,7 +137,13 @@ function MessagesList({ messages, isLoading }: { messages: Message[], isLoading:
 }
 
 // ChatInput: Manages the input area and submission
-function ChatInput({ onSubmit, isLoading }: { onSubmit: (prompt: string) => void; isLoading: boolean }) {
+function ChatInput({
+    onSubmit,
+    isLoading,
+}: {
+    onSubmit: (prompt: string) => void;
+    isLoading: boolean;
+}) {
     const [prompt, setPrompt] = useState("");
 
     const handleSubmit = () => {
@@ -176,7 +203,7 @@ function ChatInput({ onSubmit, isLoading }: { onSubmit: (prompt: string) => void
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                     strokeWidth={2}
-                                    d="M5 10l7-7m0 0l7 7m-7-7v18"
+                                    d="M5 10l7-7m-7-7v18"
                                 />
                             </svg>
                         )}
