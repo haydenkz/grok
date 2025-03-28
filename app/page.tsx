@@ -241,7 +241,7 @@ export default function Home() {
     };
 
     return (
-        <main className="flex flex-col h-screen">
+        <main className="flex flex-col h-[calc(var(--vh,_1vh)*100)]">
             <Header />
             <div className="flex-1 overflow-hidden flex flex-col">
                 {!chatStarted && (
