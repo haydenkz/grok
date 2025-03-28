@@ -36,7 +36,7 @@ function MessagesList({ messages, isLoading }: { messages: Message[], isLoading:
     }, [messages]); // Only depends on messages, not prompt
 
     return (
-        <div className="flex-1 overflow-y-auto wrap p-4">
+        <div className="flex-1 overflow-y-auto wrap p-4 h-[calc(var(--vh,_1vh)*100)]">
             <div
                 ref={messagesContainerRef}
                 className="flex flex-col w-full max-w-2xl mx-auto space-y-4"
