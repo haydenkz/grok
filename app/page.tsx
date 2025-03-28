@@ -203,7 +203,7 @@ function ChatInput({
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                     strokeWidth={2}
-                                    d="M5 10l7-7m-7-7v18"
+                                    d="M5 10l7-7m0 0l7 7m-7-7v18"
                                 />
                             </svg>
                         )}
@@ -270,7 +270,7 @@ export default function Home() {
     return (
         // calculate the height of minus the header height
 
-        <main className="flex flex-col h-[calc(100vh-4rem)] ">
+        <main className="flex flex-col h-[calc(100vh-4rem)] lg:h-screen">
             <Header />
             <div className="flex-1 overflow-hidden flex flex-col">
                 {!chatStarted && (
