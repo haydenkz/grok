@@ -36,7 +36,7 @@ function MessagesList({ messages, isLoading }: { messages: Message[], isLoading:
     }, [messages]); // Only depends on messages, not prompt
 
     return (
-        <div className="flex-1 overflow-y-auto wrap p-4 h-[calc(var(--vh,_1vh)*100)]">
+        <div className="flex overflow-y-auto wrap p-4 ">
             <div
                 ref={messagesContainerRef}
                 className="flex flex-col w-full max-w-2xl mx-auto space-y-4"
@@ -241,7 +241,9 @@ export default function Home() {
     };
 
     return (
-        <main className="flex flex-col h-[calc(var(--vh,_1vh)*100)]">
+        // calculate the height of minus the header height
+
+        <main className="flex flex-col h-[calc(100vh-4rem)] ">
             <Header />
             <div className="flex-1 overflow-hidden flex flex-col">
                 {!chatStarted && (
