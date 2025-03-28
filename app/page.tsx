@@ -12,10 +12,16 @@ import "prismjs/components/prism-css";
 import "prismjs/components/prism-json";
 import "prismjs/components/prism-python";
 
+// Define message type
+interface Message {
+    role: string;
+    content: string;
+}
+
 // MessagesList: Renders the chat messages and handles scrolling/highlighting
-function MessagesList({ messages, isLoading }) {
-    const messagesEndRef = useRef(null);
-    const messagesContainerRef = useRef(null);
+function MessagesList({ messages, isLoading }: { messages: Message[], isLoading: boolean }) {
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
 
     // Auto-scroll to bottom when messages or loading state changes
     useEffect(() => {
@@ -55,8 +61,7 @@ function MessagesList({ messages, isLoading }) {
                                 rehypePlugins={[rehypeSanitize]}
                                 components={{
                                     code({
-                                        node,
-                                        inline,
+                                        // node,
                                         className,
                                         children,
                                         ...props
@@ -64,7 +69,7 @@ function MessagesList({ messages, isLoading }) {
                                         const match = /language-(\w+)/.exec(
                                             className || ""
                                         );
-                                        return !inline ? (
+                                        return !className?.includes("inline") ? (
                                             <div className="overflow-x-auto my-2 rounded-lg">
                                                 <pre className="bg-[#1E1E1E] p-3 rounded-lg">
                                                     <code
@@ -111,7 +116,7 @@ function MessagesList({ messages, isLoading }) {
 }
 
 // ChatInput: Manages the input area and submission
-function ChatInput({ onSubmit, isLoading }) {
+function ChatInput({ onSubmit, isLoading }: { onSubmit: (prompt: string) => void; isLoading: boolean }) {
     const [prompt, setPrompt] = useState("");
 
     const handleSubmit = () => {
@@ -190,7 +195,7 @@ export default function Home() {
         { role: "assistant", content: "" },
     ]);
 
-    const handleNewMessage = async (prompt) => {
+    const handleNewMessage = async (prompt: string) => {
         const userMessage = { role: "user", content: prompt };
         setMessages((prev) => [...prev, userMessage]);
         setChatStarted(true);
