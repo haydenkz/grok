@@ -1,103 +1,259 @@
-import Image from "next/image";
+"use client";
+import { Textarea } from "@/components/ui/textarea";
+import Header from "./components/Header";
+import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
+import rehypeSanitize from "rehype-sanitize";
+import Prism from "prismjs";
+import "prismjs/themes/prism-tomorrow.css";
+import "prismjs/components/prism-typescript";
+import "prismjs/components/prism-javascript";
+import "prismjs/components/prism-css";
+import "prismjs/components/prism-json";
+import "prismjs/components/prism-python";
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+// MessagesList: Renders the chat messages and handles scrolling/highlighting
+function MessagesList({ messages, isLoading }) {
+    const messagesEndRef = useRef(null);
+    const messagesContainerRef = useRef(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    // Auto-scroll to bottom when messages or loading state changes
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages, isLoading]);
+
+    // Highlight code blocks when messages change
+    useEffect(() => {
+        if (messagesContainerRef.current) {
+            Prism.highlightAllUnder(messagesContainerRef.current);
+        }
+    }, [messages]); // Only depends on messages, not prompt
+
+    return (
+        <div className="flex-1 overflow-y-auto wrap p-4">
+            <div
+                ref={messagesContainerRef}
+                className="flex flex-col w-full max-w-2xl mx-auto space-y-4"
+            >
+                {messages.map((message, index) => (
+                    <div
+                        key={index}
+                        className={`flex w-full ${
+                            message.role === "assistant"
+                                ? "w-full"
+                                : "justify-end"
+                        }`}
+                    >
+                        <div
+                            className={`${
+                                message.role === "assistant"
+                                    ? "opacity-80 max-w-[100%]"
+                                    : "bg-[#313234] text-white opacity-70 rounded-t-4xl rounded-bl-4xl border-[1px] max-w-[80%] rounded-br-md"
+                            } px-4 py-3 break-words`}
+                        >
+                            <ReactMarkdown
+                                rehypePlugins={[rehypeSanitize]}
+                                components={{
+                                    code({
+                                        node,
+                                        inline,
+                                        className,
+                                        children,
+                                        ...props
+                                    }) {
+                                        const match = /language-(\w+)/.exec(
+                                            className || ""
+                                        );
+                                        return !inline ? (
+                                            <div className="overflow-x-auto my-2 rounded-lg">
+                                                <pre className="bg-[#1E1E1E] p-3 rounded-lg">
+                                                    <code
+                                                        className={
+                                                            match
+                                                                ? `language-${match[1]}`
+                                                                : "language-text"
+                                                        }
+                                                        {...props}
+                                                    >
+                                                        {String(
+                                                            children
+                                                        ).replace(/\n$/, "")}
+                                                    </code>
+                                                </pre>
+                                            </div>
+                                        ) : (
+                                            <code
+                                                className="bg-[#1E1E1E] px-1 py-0.5 rounded text-xs text-gray-200 w-full"
+                                                {...props}
+                                            >
+                                                {children}
+                                            </code>
+                                        );
+                                    },
+                                }}
+                            >
+                                {message.content}
+                            </ReactMarkdown>
+                        </div>
+                    </div>
+                ))}
+                {isLoading && (
+                    <div className="flex justify-start w-full">
+                        <div className="opacity-80 max-w-[80%] p-4">
+                            <span className="animate-pulse">Thinking...</span>
+                        </div>
+                    </div>
+                )}
+                <div ref={messagesEndRef} />
+            </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+    );
+}
+
+// ChatInput: Manages the input area and submission
+function ChatInput({ onSubmit, isLoading }) {
+    const [prompt, setPrompt] = useState("");
+
+    const handleSubmit = () => {
+        if (!prompt || isLoading) return;
+        onSubmit(prompt);
+        setPrompt("");
+    };
+
+    return (
+        <div className="px-4 pb-3 bg-transparent justify-center items-center flex">
+            <div className="flex max-w-[51rem] w-full flex-col min-h-20 items-center justify-center rounded-3xl bg-card relative border-[1px] overflow-hidden max-h-80">
+                <Textarea
+                    placeholder="What do you want to know?"
+                    className="w-full border-none shadow-none focus-visible:ring-0 rounded-3xl pt-5 pb-0 scrollbar-thin resize-none opacity-90"
+                    onChange={(e) => setPrompt(e.target.value)}
+                    value={prompt}
+                    disabled={isLoading}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSubmit();
+                        }
+                    }}
+                />
+                <div className="flex flex-row items-center w-full px-4 mt-12">
+                    <button
+                        className={`flex items-center justify-center w-8 h-8 p-2 rounded-full ${
+                            prompt && !isLoading ? "bg-white" : "bg-[#454648]"
+                        } text-black absolute bottom-4 right-4`}
+                        onClick={handleSubmit}
+                        disabled={!prompt || isLoading}
+                    >
+                        {prompt && !isLoading ? (
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-6 w-6"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 10l7-7m0 0l7 7m-7-7v18"
+                                />
+                            </svg>
+                        ) : (
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-6 w-6 opacity-70"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="white"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M5 10l7-7m0 0l7 7m-7-7v18"
+                                />
+                            </svg>
+                        )}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Home: Parent component managing state and layout
+export default function Home() {
+    const [chatStarted, setChatStarted] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [messages, setMessages] = useState([
+        { role: "assistant", content: "" },
+    ]);
+
+    const handleNewMessage = async (prompt) => {
+        const userMessage = { role: "user", content: prompt };
+        setMessages((prev) => [...prev, userMessage]);
+        setChatStarted(true);
+        setIsLoading(true);
+
+        try {
+            const messageLog = messages.concat(userMessage).map((msg) => ({
+                role: msg.role,
+                content: msg.content,
+            }));
+            const response = await fetch("/api/grok", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(messageLog),
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`API error (${response.status}):`, errorText);
+                throw new Error(
+                    `API responded with status: ${response.status}`
+                );
+            }
+
+            const data = await response.json();
+            setMessages((prev) => [
+                ...prev,
+                { role: "assistant", content: data.choices[0].message.content },
+            ]);
+        } catch (error) {
+            console.error("Error calling Grok API:", error);
+            setMessages((prev) => [
+                ...prev,
+                {
+                    role: "assistant",
+                    content:
+                        "Sorry, I encountered an error. Please try again later.",
+                },
+            ]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return (
+        <main className="flex flex-col h-screen">
+            <Header />
+            <div className="flex-1 overflow-hidden flex flex-col">
+                {!chatStarted && (
+                    <div className="flex flex-col items-center justify-center w-full h-full p-4">
+                        <h1 className="text-2xl font-bold text-center">
+                            Welcome to Grok.
+                        </h1>
+                        <p className="mt-2 text-lg text-center opacity-50">
+                            How can I help you today?
+                        </p>
+                    </div>
+                )}
+                {chatStarted && (
+                    <MessagesList messages={messages} isLoading={isLoading} />
+                )}
+            </div>
+            <ChatInput onSubmit={handleNewMessage} isLoading={isLoading} />
+        </main>
+    );
 }
